@@ -13,6 +13,7 @@
 #include <QAbstractItemView>
 #include <QString>
 #include <QTimer>
+#include <QInputDialog>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -228,10 +229,58 @@ void MainWindow::updateLog()
 
 void MainWindow::onCreateProcess()
 {
+    bool okPrioridade = false;
+    int prioridade = QInputDialog::getInt(
+        this,
+        "Criar processo",
+        "Prioridade:",
+        1,      // valor padrão
+        1,      // valor mínimo
+        10,     // valor máximo
+        1,      // passo
+        &okPrioridade
+    );
+
+    if (!okPrioridade) {
+        return;
+    }
+
+    bool okTempo = false;
+    int tempoTotal = QInputDialog::getInt(
+        this,
+        "Criar processo",
+        "Tempo total de CPU:",
+        10,     // valor padrão
+        1,      // valor mínimo
+        100,    // valor máximo
+        1,      // passo
+        &okTempo
+    );
+
+    if (!okTempo) {
+        return;
+    }
+
+    bool okPaginas = false;
+    int quantidadePaginas = QInputDialog::getInt(
+        this,
+        "Criar processo",
+        "Quantidade de páginas:",
+        4,      // valor padrão
+        1,      // valor mínimo
+        20,     // valor máximo
+        1,      // passo
+        &okPaginas
+    );
+
+    if (!okPaginas) {
+        return;
+    }
+
     simulador.criarProcesso(
-        1,  // prioridade
-        10, // tempo total de CPU
-        4   // quantidade de páginas
+        prioridade,
+        tempoTotal,
+        quantidadePaginas
     );
 
     updateInterface();
