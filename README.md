@@ -4,69 +4,70 @@ Simulador didático de Sistemas Operacionais inspirado no SOsim, desenvolvido pa
 
 O objetivo do projeto é demonstrar, de forma visual, conceitos fundamentais de Sistemas Operacionais, como:
 
-- criação de processos;
-- estados de processos;
-- fila de pronto;
-- processo em execução;
-- fila de I/O;
-- escalonamento de CPU;
-- alteração de prioridade;
-- clock do sistema;
-- gerenciamento de memória;
-- paginação;
-- substituição de páginas por FIFO;
-- registro de eventos em log.
+* criação de processos;
+* estados de processos;
+* fila de pronto;
+* processo em execução;
+* fila de I/O;
+* escalonamento de CPU;
+* alteração de prioridade;
+* clock do sistema;
+* gerenciamento de memória;
+* paginação;
+* substituição de páginas por FIFO;
+* registro de eventos em log.
 
 ---
 
 ## Tecnologias utilizadas
 
-| Item | Escolha |
-|---|---|
-| Linguagem | C++ |
-| Interface gráfica | Qt Widgets |
-| Sistema de build | CMake |
-| Escalonamento | Round Robin |
-| Gerenciamento de memória | Paginação |
-| Substituição de páginas | FIFO |
+| Item                     | Escolha    |
+| ------------------------ | ---------- |
+| Linguagem                | C++        |
+| Interface gráfica        | Qt Widgets |
+| Sistema de build         | CMake      |
+| Escalonamento de CPU     | FIFO/FCFS  |
+| Gerenciamento de memória | Paginação  |
+| Substituição de páginas  | FIFO       |
 
 ---
 
 ## Algoritmos escolhidos
 
-### Escalonamento: Round Robin
+### Escalonamento de CPU: FIFO/FCFS
 
-O escalonamento de processos é feito usando **Round Robin**.
+O escalonamento de processos é feito usando **FIFO**, também conhecido como **FCFS — First-Come, First-Served**.
 
-Nesse algoritmo, cada processo recebe uma fatia de tempo chamada **quantum**.
+Nesse algoritmo, os processos são executados na ordem em que chegam à fila de pronto.
 
 Funcionamento básico:
 
 1. O primeiro processo da fila de pronto entra em execução.
-2. O processo executa por uma quantidade limitada de clocks.
-3. Se o processo terminar, ele é finalizado.
+2. O processo permanece usando a CPU até finalizar ou solicitar I/O.
+3. Se o processo terminar, ele é finalizado e removido da CPU.
 4. Se o processo solicitar I/O, ele vai para a fila de bloqueados.
-5. Se o quantum acabar e o processo ainda não terminou, ele volta para o fim da fila de pronto.
+5. Quando o I/O termina, o processo volta para o fim da fila de pronto.
 6. O próximo processo da fila é escalonado.
 
 Exemplo:
 
 ```text
-Quantum = 3
-
 Fila de pronto:
 P1, P2, P3
 
-P1 executa por 3 clocks.
+P1 entra em execução.
 
-Se P1 não terminou:
-P1 volta para o fim da fila.
+Enquanto P1 não terminar e não solicitar I/O:
+P1 continua executando.
 
-Nova fila:
-P2, P3, P1
+Quando P1 termina:
+P2 entra em execução.
+
+Depois:
+P3 entra em execução.
 ```
 
-O Round Robin foi escolhido porque é simples, visual e fácil de demonstrar em uma apresentação curta.
+O FIFO/FCFS foi escolhido porque é simples, direto e fácil de demonstrar visualmente. Ele permite observar claramente a fila de pronto, o processo em execução e a ordem de atendimento dos processos.
 
 ---
 
@@ -80,7 +81,7 @@ Se houver quadro livre, a página é carregada.
 
 Se a memória estiver cheia, ocorre substituição de página usando **FIFO**.
 
-No FIFO, a página mais antiga na memória é removida para dar lugar à nova página.
+No FIFO de substituição de páginas, a página mais antiga na memória é removida para dar lugar à nova página.
 
 Exemplo:
 
@@ -112,18 +113,19 @@ Quadro 3 -> Página 4
 SysLab/
 ├── CMakeLists.txt
 ├── README.md
+├── main.cpp
 ├── include/
-│   ├── processo.hpp
+│   ├── processos.hpp
 │   ├── escalonador.hpp
 │   ├── memoria.hpp
-│   ├── simulador.hpp
-│   └── mainwindow.hpp
-└── src/
-    ├── main.cpp
-    ├── processo.cpp
-    ├── escalonador.cpp
-    ├── memoria.cpp
-    ├── simulador.cpp
+│   └── simulador.hpp
+├── src/
+│   ├── processos.cpp
+│   ├── escalonador.cpp
+│   ├── memoria.cpp
+│   └── simulador.cpp
+└── ui/
+    ├── mainwindow.hpp
     └── mainwindow.cpp
 ```
 
@@ -137,41 +139,40 @@ Arquivo de configuração do CMake.
 
 Ele define:
 
-- nome do projeto;
-- versão do C++;
-- dependência do Qt Widgets;
-- arquivos `.cpp`;
-- regras de compilação.
+* nome do projeto;
+* versão do C++;
+* dependência do Qt Widgets;
+* arquivos `.cpp`;
+* regras de compilação.
 
 ---
 
-### `src/main.cpp`
+### `main.cpp`
 
 Arquivo principal do programa.
 
 Responsável por:
 
-- iniciar a aplicação Qt;
-- criar a janela principal;
-- executar o loop da interface gráfica.
+* iniciar a aplicação Qt;
+* criar a janela principal;
+* executar o loop da interface gráfica.
 
 ---
 
-### `include/processo.hpp` e `src/processo.cpp`
+### `include/processos.hpp` e `src/processos.cpp`
 
 Definem a classe `Processo`.
 
 A classe armazena informações como:
 
-- PID;
-- nome;
-- prioridade;
-- tempo total;
-- tempo restante;
-- estado atual;
-- quantum usado;
-- tempo de I/O;
-- páginas do processo.
+* PID;
+* nome;
+* prioridade;
+* tempo total;
+* tempo restante;
+* estado atual;
+* tempo de I/O;
+* páginas do processo.
 
 Estados possíveis:
 
@@ -187,15 +188,16 @@ Finalizado
 
 ### `include/escalonador.hpp` e `src/escalonador.cpp`
 
-Implementam o escalonador **Round Robin**.
+Implementam o escalonador **FIFO/FCFS**.
 
 Responsabilidades:
 
-- armazenar a fila de pronto;
-- adicionar processos à fila;
-- escolher o próximo processo;
-- devolver processos para o fim da fila;
-- controlar o quantum.
+* armazenar a fila de pronto;
+* adicionar processos à fila;
+* escolher o próximo processo;
+* entregar à CPU o processo que chegou primeiro.
+
+O escalonador utiliza uma fila, onde o primeiro processo inserido é o primeiro processo a ser executado.
 
 ---
 
@@ -205,12 +207,12 @@ Implementam o gerenciamento de memória.
 
 Responsabilidades:
 
-- representar a memória física como quadros;
-- verificar se uma página já está carregada;
-- carregar páginas na memória;
-- detectar page fault;
-- substituir páginas usando FIFO;
-- liberar páginas de processos finalizados.
+* representar a memória física como quadros;
+* verificar se uma página já está carregada;
+* carregar páginas na memória;
+* detectar page fault;
+* substituir páginas usando FIFO;
+* liberar páginas de processos finalizados.
 
 ---
 
@@ -220,16 +222,16 @@ Contêm a lógica principal da simulação.
 
 O simulador controla:
 
-- clock global;
-- processo em execução;
-- fila de pronto;
-- fila de I/O;
-- criação de processos;
-- execução de cada tick;
-- acesso à memória;
-- page faults;
-- finalização de processos;
-- geração de logs.
+* clock global;
+* processo em execução;
+* fila de pronto;
+* fila de I/O;
+* criação de processos;
+* execução de cada tick;
+* acesso à memória;
+* page faults;
+* finalização de processos;
+* geração de logs.
 
 A cada tick do clock, o simulador deve:
 
@@ -241,34 +243,31 @@ A cada tick do clock, o simulador deve:
 5. Simular acesso a uma página de memória.
 6. Verificar falta de página.
 7. Verificar se o processo terminou.
-8. Verificar se o quantum acabou.
-9. Atualizar a interface.
+8. Atualizar a interface.
 ```
 
 ---
 
-### `include/mainwindow.hpp` e `src/mainwindow.cpp`
+### `ui/mainwindow.hpp` e `ui/mainwindow.cpp`
 
 Implementam a interface gráfica com **Qt Widgets**.
 
-A janela principal deve conter:
+A janela principal contém:
 
-- indicador do clock;
-- indicador do quantum;
-- contador de page faults;
-- botão para criar processo;
-- botão para executar um clock;
-- botão para executar automaticamente;
-- botão para pausar;
-- botão para enviar processo para I/O;
-- botão para alterar prioridade;
-- botão para resetar;
-- tabela da fila de pronto;
-- tabela do processo em execução;
-- tabela da fila de I/O;
-- tabela da memória;
-- tabela com todos os processos;
-- área de log.
+* indicador do clock;
+* contador de page faults;
+* botão para criar processo;
+* botão para executar um clock;
+* botão para executar automaticamente;
+* botão para pausar;
+* botão para enviar processo para I/O;
+* botão para alterar prioridade;
+* botão para resetar;
+* tabela da fila de pronto;
+* tabela do processo em execução;
+* tabela da fila de I/O;
+* tabela da memória;
+* área de log.
 
 ---
 
@@ -278,7 +277,7 @@ Uma interface simples pode seguir este modelo:
 
 ```text
 +------------------------------------------------------+
-| Clock: 12        Quantum: 3        Page Faults: 4    |
+| Clock: 12                  Page Faults: 4            |
 +------------------------------------------------------+
 | [Criar Processo] [Executar Clock] [Auto] [Pausar]    |
 | [Alterar Prioridade] [Enviar para I/O] [Resetar]     |
@@ -288,10 +287,10 @@ Fila de pronto:
 PID | Nome | Prioridade | Tempo restante | Estado
 
 Processo em execução:
-PID | Nome | Quantum usado | Tempo restante
+PID | Nome | Tempo restante | Estado
 
 Fila de I/O:
-PID | Nome | Tempo restante de I/O
+PID | Nome | Tempo restante de I/O | Estado
 
 Memória:
 Quadro | PID | Página | Estado
@@ -299,7 +298,7 @@ Quadro | PID | Página | Estado
 Log:
 [Clock 1] Processo P1 criado.
 [Clock 2] P1 entrou em execução.
-[Clock 5] Quantum de P1 acabou.
+[Clock 5] Processo P1 executou 1 unidade de tempo.
 ```
 
 ---
@@ -344,7 +343,7 @@ cmake --build .
 Ainda dentro da pasta `build`:
 
 ```bash
-./MiniSOsim
+./SysLab
 ```
 
 ---
@@ -355,9 +354,9 @@ Ainda dentro da pasta `build`:
 2. Crie alguns processos.
 3. Observe os processos entrando na fila de pronto.
 4. Execute o clock manualmente ou automaticamente.
-5. Veja o processo em execução.
-6. Observe a troca de contexto quando o quantum acabar.
-7. Envie processos para I/O.
+5. Veja o primeiro processo da fila entrar em execução.
+6. Observe que, no FIFO/FCFS, o processo permanece executando até finalizar ou ir para I/O.
+7. Envie processos para I/O, se desejar.
 8. Observe processos bloqueados retornando para a fila de pronto.
 9. Acompanhe o mapeamento das páginas na memória.
 10. Verifique os eventos no log.
@@ -368,17 +367,16 @@ Ainda dentro da pasta `build`:
 
 Para a primeira versão funcional, o projeto deve conseguir:
 
-- criar processos;
-- inserir processos na fila de pronto;
-- executar processos com Round Robin;
-- controlar quantum;
-- mover processo para I/O;
-- retornar processo de I/O para pronto;
-- finalizar processo;
-- simular memória paginada;
-- aplicar FIFO quando a memória estiver cheia;
-- exibir tabelas na interface;
-- gerar log dos eventos.
+* criar processos;
+* inserir processos na fila de pronto;
+* executar processos com FIFO/FCFS;
+* mover processo para I/O;
+* retornar processo de I/O para pronto;
+* finalizar processo;
+* simular memória paginada;
+* aplicar FIFO quando a memória estiver cheia;
+* exibir tabelas na interface;
+* gerar log dos eventos.
 
 ---
 
@@ -386,24 +384,24 @@ Para a primeira versão funcional, o projeto deve conseguir:
 
 Depois que a versão básica estiver funcionando, é possível adicionar:
 
-- Round Robin com prioridade;
-- algoritmo de prioridade pura;
-- algoritmo FIFO de CPU;
-- algoritmo SJF;
-- algoritmo LRU para memória;
-- visualização colorida da memória;
-- gráfico de uso da CPU;
-- estatísticas de throughput;
-- taxa de page faults;
-- tempo médio de espera;
-- salvamento do log em arquivo;
-- carregamento de cenários de teste.
+* Round Robin;
+* Round Robin com prioridade;
+* algoritmo de prioridade pura;
+* algoritmo SJF;
+* algoritmo LRU para memória;
+* visualização colorida da memória;
+* gráfico de uso da CPU;
+* estatísticas de throughput;
+* taxa de page faults;
+* tempo médio de espera;
+* salvamento do log em arquivo;
+* carregamento de cenários de teste.
 
 ---
 
 ## Observação sobre prioridade
 
-Nesta versão inicial, a prioridade pode ser armazenada e alterada, mas o algoritmo principal continua sendo **Round Robin puro**.
+Nesta versão inicial, a prioridade pode ser armazenada e alterada, mas o algoritmo principal continua sendo **FIFO/FCFS**.
 
 Ou seja:
 
@@ -413,16 +411,16 @@ A prioridade pode ser modificada.
 Mas ela ainda não decide qual processo executa primeiro.
 ```
 
-Uma melhoria possível é implementar **Round Robin com prioridade**, em que processos de maior prioridade são escolhidos antes, mas ainda respeitando quantum entre processos da mesma prioridade.
+Uma melhoria possível é implementar escalonamento por prioridade, em que processos de maior prioridade são escolhidos antes dos demais.
 
 ---
 
 ## Resumo do projeto
 
-O MiniSOsim é um simulador didático de Sistemas Operacionais que demonstra:
+O SysLab é um simulador didático de Sistemas Operacionais que demonstra:
 
 ```text
-Processos + Escalonamento Round Robin + I/O + Paginação + FIFO
+Processos + Escalonamento FIFO/FCFS + I/O + Paginação + FIFO de páginas
 ```
 
 Ele não é um sistema operacional real. É uma simulação visual para fins educacionais.
